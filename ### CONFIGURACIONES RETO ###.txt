@@ -1,0 +1,719 @@
+### CONFIGURACIONES RETO ###
+----- Configuraciones básicas para cada dispositivo
+
+enable
+configure terminal
+hostname R1 
+no ip domain lookup
+enable secret cisco
+line console 0
+ password cisco
+ login
+line vty 0 4
+ password cisco
+ login
+ service password-encryption
+banner motd # Acceso solo con credenciales autorizadas #
+end
+---- Configuración de SSH
+
+ip domain name midominio.local
+crypto key generate rsa modulus 1024
+ip ssh version 2
+!
+line vty 0 4
+ login local
+ transport input ssh
+!
+end
+
+
+---- Configuración de ISP
+
+hostname ISP
+	
+conf t
+
+interface g1
+ ip address 64.100.1.2 255.255.255.0
+ no shutdown
+exit
+
+interface g2
+ ip address 214.205.5.21 255.255.255.252
+ no shutdown
+exit
+
+interface g3
+ ip address dhcp
+ no shutdown 
+exit
+
+ip route 192.168.0.0 255.255.255.0 214.205.5.22  
+ip route 192.168.1.0 255.255.255.0 214.205.5.22
+ip route 172.16.0.0 255.255.255.0 214.205.5.22   
+ip route 0.0.0.0 0.0.0.0 GigabitEthernet3
+
+
+---Configuración para ámbito real
+conexión a Internet
+interface g0/0
+ ip address dhcp
+ no shutdown 
+exit
+
+conexión a R1
+interface s0/0/0
+ ip address 214.205.5.21 255.255.255.252
+ no shutdown
+exit
+
+conexión al server
+interface s0/0/1
+ ip address 64.100.1.2 255.255.255.0
+ no shutdown
+exit
+
+
+ip route 192.168.0.0 255.255.255.0 214.205.5.22  
+ip route 192.168.1.0 255.255.255.0 214.205.5.22
+ip route 172.16.0.0 255.255.255.0 214.205.5.22   
+
+
+----- Configuración de R1
+
+hostname R1
+
+conf t
+interface g0/0
+ ip address 214.205.5.22 255.255.255.252
+ no shutdown
+exit
+
+interface g0/1
+ ip address 192.168.1.241 255.255.255.252
+ no shutdown
+exit
+
+interface g0/2
+ ip address 192.168.1.249 255.255.255.252
+ no shutdown
+exit
+
+interface G0/3
+ no ip address
+ ip address 172.16.100.1 255.255.255.252
+ no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 214.205.5.20
+ip route 192.168.0.0 255.255.255.0 192.168.1.246
+ip route 172.16.0.0 255.255.255.0 192.168.1.246
+ip route 0.0.0.0 0.0.0.0 214.205.5.21
+
+
+router ospf 1
+ router-id 1.1.1.1
+ network 192.168.1.240 0.0.0.3 area 0
+ network 192.168.1.248 0.0.0.3 area 0
+default-information originate
+
+
+username cisco privilege 15 password cisco
+ip domain name red.local
+crypto key generate rsa modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+end
+
+
+---- Configuración real R1
+conf t
+Conexión ISP
+interface s0/1/0
+ ip address 214.205.5.22 255.255.255.252
+ no shutdown
+exit
+
+conexión a R2
+interface G0/0
+ ip address 192.168.1.241 255.255.255.252
+ no shutdown
+exit
+
+conexión a R3 
+interface s0/1/1
+ ip address 192.168.1.249 255.255.255.252
+ no shutdown
+exit
+
+interface G0/3
+ no ip address
+ ip address 172.16.100.1 255.255.255.252
+ no shutdown
+exit
+
+ip route 0.0.0.0 0.0.0.0 214.205.5.20
+ip route 192.168.0.0 255.255.255.0 192.168.1.246
+ip route 172.16.0.0 255.255.255.0 192.168.1.246
+ip route 0.0.0.0 0.0.0.0 214.205.5.21
+
+router ospf 1
+ router-id 1.1.1.1
+ network 192.168.1.240 0.0.0.3 area 0
+ network 192.168.1.248 0.0.0.3 area 0
+default-information originate
+
+
+SSH---
+username cisco privilege 15 password cisco
+ip domain name red.local
+crypto key generate rsa modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+end
+
+---- Configuracion alt R2
+
+conf t
+
+interface GigabitEthernet0/1
+ no shutdown
+
+interface GigabitEthernet0/1.10
+ encapsulation dot1q 10
+ ip address 192.168.0.1 255.255.255.128
+
+interface GigabitEthernet0/2
+ no shutdown
+
+interface GigabitEthernet0/2.30
+ encapsulation dot1q 30
+ ip address 192.168.0.129 255.255.255.128
+
+
+router ospf 1
+ router-id 2.2.2.2
+ network 192.168.1.240 0.0.0.3 area 0
+ network 192.168.1.244 0.0.0.3 area 0
+ network 192.168.0.0 0.0.0.127 area 0
+ network 192.168.0.128 0.0.0.127 area 0
+
+username cisco privilege 15 password cisco
+ip domain-name red.local
+crypto key generate rsa modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+end
+
+---- Configuración de R3
+
+hostname R3
+
+conf t
+interface GigabitEthernet0/0
+ description Enlace a R1
+ ip address 192.168.1.250 255.255.255.252
+ no shutdown
+exit
+
+interface GigabitEthernet0/1
+ description Trunk hacia S1
+ no ip address
+ no shutdown
+exit
+
+interface GigabitEthernet0/2
+ description Enlace a R2
+ ip address 192.168.1.246 255.255.255.252
+ no shutdown
+exit
+
+
+interface GigabitEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 192.168.1.1 255.255.255.192
+exit
+
+interface GigabitEthernet0/1.20
+ encapsulation dot1Q 20
+ ip address 192.168.1.65 255.255.255.192
+exit
+
+interface GigabitEthernet0/1.30
+ encapsulation dot1Q 30
+ ip address 192.168.1.129 255.255.255.192
+exit
+
+interface GigabitEthernet0/1.50
+ encapsulation dot1Q 50
+ ip address 172.16.1.1 255.255.255.0
+exit
+
+interface GigabitEthernet0/1.99
+ encapsulation dot1Q 99 native
+ ip address 172.16.0.1 255.255.255.0
+exit
+
+router ospf 1
+ router-id 3.3.3.3
+ network 192.168.1.0 0.0.0.63 area 0
+ network 192.168.1.64 0.0.0.63 area 0
+ network 192.168.1.128 0.0.0.63 area 0
+ network 192.168.1.248 0.0.0.3 area 0  
+ network 192.168.1.244 0.0.0.3 area 0  
+exit
+
+ip route 0.0.0.0 0.0.0.0 192.168.1.249
+
+
+! ---- SSH y acceso remoto ----
+username cisco privilege 15 password cisco
+ip domain name red.local
+crypto key generate rsa modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+exit
+
+end
+
+
+---- Configuración de SW1
+
+hostname S1
+
+conf t
+vlan 10
+ name Ventas
+vlan 20
+ name Marketing
+vlan 30
+ name RRHH
+vlan 50
+ name Admins
+vlan 99
+ name Nativa
+
+interface range Gi0/0, Gi0/1, Gi0/2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+
+interface Gi1/0
+ switchport mode access
+ switchport access vlan 30
+
+interface Gi1/1
+ switchport mode access
+ switchport access vlan 20
+
+interface Gi1/2
+ switchport mode access
+ switchport access vlan 10
+
+interface vlan 99
+ ip address 172.16.0.2 255.255.255.0
+ no shutdown
+
+ip default-gateway 172.16.0.1
+end
+
+
+---- Configuración de SW2
+
+hostname S2
+
+conf t
+
+vlan 10
+ name Ventas
+vlan 20
+ name Marketing
+vlan 30
+ name RRHH
+vlan 50
+ name Admins
+vlan 99
+ name Nativa
+
+interface GigabitEthernet0/0
+ switchport trunk encapsulation dot1q   
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport nonegotiate
+ no shutdown
+
+interface GigabitEthernet1/0
+ no switchport access vlan        
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport nonegotiate
+ no shutdown
+
+! Accesos para VPCs
+interface GigabitEthernet0/1
+ switchport mode access
+ switchport access vlan 10   
+ no shutdown
+
+interface GigabitEthernet0/2
+ switchport mode access
+ switchport access vlan 20   
+ no shutdown
+
+interface GigabitEthernet0/3
+ switchport mode access
+ switchport access vlan 30   
+ no shutdown
+
+
+interface Vlan99
+ ip address 172.16.0.3 255.255.255.0
+ no shutdown
+
+ip default-gateway 172.16.0.1
+
+end
+
+
+---- Configuración de SW3
+
+hostname S3
+conf t
+
+vlan 10 
+name Ventas
+vlan 20 
+name Marketing
+vlan 30 
+name RRHH
+vlan 50 
+name Admins
+vlan 99 
+name Nativa
+
+
+interface range GigabitEthernet0/0,GigabitEthernet0/1
+ switchport mode trunk
+ switchport trunk native vlan 99
+
+interface GigabitEthernet0/2
+ switchport mode access
+ switchport access vlan 30  
+
+interface GigabitEthernet0/3
+ switchport mode access
+ switchport access vlan 30   
+
+interface GigabitEthernet1/0
+ switchport mode access
+ switchport access vlan 50  
+ 
+interface Vlan99
+ ip address 172.16.0.4 255.255.255.0
+ no shutdown
+
+ip default-gateway 172.16.0.1
+end
+
+----- Configuración del S4
+conf t
+
+vlan 30
+ name RRHH
+
+interface range GigabitEthernet0/1 - 2
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+
+interface GigabitEthernet0/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+
+exit
+
+username cisco privilege 15 password cisco
+ip domain name red.local
+crypto key generate rsa modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+end
+
+--- Configuración del S5
+
+conf t
+
+vlan 10
+ name VENTAS
+
+interface range GigabitEthernet0/1 - 2
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+
+interface GigabitEthernet0/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+
+exit
+
+username cisco privilege 15 password cisco
+ip domain name red.local
+crypto key generate rsa modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+end
+
+
+----- Configuración de la VPC
+set pcname PC1
+
+VPC1
+ip 192.168.1.10 255.255.255.192 192.168.1.1
+save
+VPC2
+ip 192.168.1.74 255.255.255.192 192.168.1.65
+save
+VPC3
+ip 192.168.1.134 255.255.255.192 192.168.1.129
+save
+VPC4
+ip 192.168.0.130 255.255.255.128 192.168.0.129
+save
+VPC5
+ip 192.168.0.10 255.255.255.128 192.168.0.1
+save
+
+
+
+
+
+##########----PRUEBAS--########################
+Verificar OSPF y rutas en routers
+show ip ospf neighbor
+show ip route ospf
+
+
+SWITCHS
+Verificar trunks y VLANs en switches
+
+show interfaces trunk
+show vlan brief
+
+! En S1
+ping 172.16.0.3   ! S2
+ping 172.16.0.4   ! S3
+
+! En S2
+ping 172.16.0.2   ! S1
+ping 172.16.0.4   ! S3
+
+! En S3
+ping 172.16.0.2   ! S1
+ping 172.16.0.3   ! S2
+
+
+
+--------- Configuracion Server -------------------
+vi /etc/netplan/01-netcfg.yaml
+i
+# This file describes the network interfaces available on your system
+# For more information, see netplan(5).
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: yes
+    eth1:
+      dhcp4: no
+      addresses: [64.100.1.3/24]
+      gateway4: 64.100.1.1
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+    
+
+:wq
+  
+-- Instalar y Configurar SNMP (Para Monitoreo):
+sudo apt update
+sudo apt install snmp snmpd snmp-mibs-downloader -y
+
+
+vi /etc/snmp/snmpd.conf
+
+///
+
+# Escucha en la IP del servidor y puerto 161
+agentaddress  udp:64.100.1.3:161
+
+###########################################################################
+# SECTION: Access Control Setup
+#
+#   This section defines who is allowed to talk to your running
+#   snmp agent.
+
+# Views
+#   arguments viewname included [oid]
+
+#  system + hrSystem groups only
+view systemonly included .1.3.6.1.2.1.1              # Sistema
+view systemonly included .1.3.6.1.2.1.25.1           # HR-System
+view systemonly included .1.3.6.1.2.1.2              # Interfaces de red
+
+# rocommunity: a SNMPv1/SNMPv2c read-only access community name
+#   arguments:  community [default|hostname|network/bits] [oid | -V view]
+
+# Read-only access to everyone to the systemonly view
+
+# Acceso de solo lectura desde el gateway (64.100.1.1) y el ISP (64.100.1.2)
+rocommunity  swlab 64.100.1.1/32 -V systemonly   # Gateway
+rocommunity  swlab 64.100.1.2/32 -V systemonly   # ISP
+
+# SNMPv3 doesn't use communities, but users with (optionally) an
+# authentication and encryption string. This user needs to be created
+# with what they can view with rouser/rwuser lines in this file.
+#
+# createUser username (MD5|SHA|SHA-512|SHA-384|SHA-256|SHA-224) authpassphrase [DES|AES] [privpassphrase]
+# e.g.
+# createuser authPrivUser SHA-512 myauthphrase AES myprivphrase
+#
+# SNMPv3 (opcional, para mayor seguridad)
+createUser zabbixUser SHA Admin123 AES Zabbix456
+rouser zabbixUser authpriv -V systemonly
+
+///
+sudo systemctl restart snmpd
+
+
+///// Configuracion para R1 SNMP
+
+conf t
+snmp-server community swlab RO
+snmp-server location R1
+snmp-server contact admin@ucacue.edu.ec
+end
+
+
+
+
+----------- Centralizar Logs con SYSLOG:
+Instalar Rsyslog:
+
+sudo apt install rsyslog -y
+Configurar recepción remota (/etc/rsyslog.conf):
+
+
+sudo nano /etc/rsyslog.conf
+Descomenta:
+
+module(load="imudp")  # Habilita UDP
+input(type="imudp" port="514")
+Crear reglas para logs de dispositivos:
+
+bash
+sudo nano /etc/rsyslog.d/network-devices.conf
+Añade:
+
+bash
+if $fromhost-ip startswith '192.168.0.' then /var/log/network-devices.log
+& stop
+Reiniciar Rsyslog:
+
+bash
+sudo systemctl restart Rsyslog
+
+------------ Configurar NTP (Sincronización de Tiempo):
+Instalar Chrony (servidor/cliente NTP):
+
+bash
+sudo apt install chrony -y
+Configurar /etc/chrony/chrony.conf:
+
+bash
+sudo nano /etc/chrony/chrony.conf
+Añade servidores NTP públicos:
+
+bash
+server 0.south-america.pool.ntp.org iburst
+server 1.south-america.pool.ntp.org iburst
+Reiniciar y verificar:
+
+bash
+sudo systemctl restart chrony
+chronyc sources  # Debe mostrar servidores sincronizados
+
+
+------------ Configuración en Zabbix Server (Linux con network-scripts)
+--- Configurar archivo para eth0 conexión con el host Net
+Contenido del archivo de configuración:
+
+DEVICE="eth0"
+BOOTPROTO=static
+IPADDR=192.168.183.146
+NETMASK=255.255.255.0
+GATEWAY=192.168.183.1
+ONBOOT=yes
+NM_CONTROLLED="no"
+PERSISTENT_DHCLIENT=1
+ONBOOT="yes"
+TYPE=Ethernet
+DEFROUTE=yes
+PEERDNS=yes
+PEERROUTES=yes
+IPV4_FAILURE_FATAL=yes
+NAME="eth0"
+
+--- Crear archivo de configuración para eth1
+
+vi /etc/sysconfig/network-scripts/ifcfg-eth1
+
+Contenido del archivo:
+
+DEVICE=eth1
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR=172.16.100.2
+NETMASK=255.255.255.252
+GATEWAY=192.168.183.1    # (de la red eth0, para acceso a Internet)
+DNS1=8.8.8.8
+---- Aplicar la configuración de red
+
+ip addr flush dev eth1
+ifdown eth1 && ifup eth1
+Nota: si usas una distribución muy nueva, es mejor nmcli, pero ifup/ifdown funciona en tu entorno.
+
+---- Verificar IP de eth1
+
+ip addr show eth1
+Debes ver: inet 172.16.100.2/30
+
+---- Verificación de conectividad (en ambos extremos)
+En Zabbix Server
+ping 172.16.100.1
+En R1
+ping 172.16.100.2
+
+
+------ Requisitos en cada dispositivo de red (Cisco)
+En cada router y switch que quieras monitorear, configura SNMPv2 con una comunidad pública o personalizada:
+
+configure terminal
+snmp-server community public RO
+exit
